@@ -1,13 +1,14 @@
 import log4js from 'log4js'
 import HttpService from './NewHttpService'
-import ErrorService from './ErrorService'
+import ErrorService from './NewErrorService'
 
 const logger = log4js.getLogger()
 
 class APIService {
-  constructor(LOG_LEVEL, SERVER_IP, URL, SYSURI, SVCURI, ERRURI) {
+  constructor(ALERT_WARNING, LOG_LEVEL, SERVER_IP, URL, SYSURI, SVCURI, ERRURI) {
     logger.level = LOG_LEVEL
     this.httpService = new HttpService(LOG_LEVEL)
+    this.errorService = new ErrorService(ALERT_WARNING)
 
     this._ip = SERVER_IP
     this._url = URL
@@ -21,6 +22,7 @@ class APIService {
 
   // 서버정보저장
   setServerInfo (data) {
+    // { server: '183.111.159.73', cpu: 16, memory: 14, harddisk:[ { fs: 'E:/', use: 46 } ] }
     var senddata = JSON.stringify({
       server: this._ip,
       cpu: data[0],
@@ -28,7 +30,7 @@ class APIService {
       harddisk: data[2]
     })
 
-    let errObj = ErrorService.setSysError(senddata)
+    let errObj = this.errorService.setSysError(senddata)
     if ( errObj.error ) this.setErrorLog(errObj)
 
     this.httpService.sendRequest(this._url, this._sysuri, 'POST', this._headers, senddata, (res) => {
@@ -44,7 +46,7 @@ class APIService {
       services: data
     })
 
-    let errObj = ErrorService.setSvcError(senddata)
+    let errObj = this.errorService.setSvcError(senddata)
     if ( errObj.error ) this.setErrorLog(errObj)
 
     this.httpService.sendRequest(this._url, this._svcuri, 'POST', this._headers, senddata, (res) => {
